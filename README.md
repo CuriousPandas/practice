@@ -61,4 +61,4 @@ review is the boundary.
 
 ## License
 
-MIT, copyright [Sallux](https://sallux.dev). See [LICENSE](LICENSE).
+MIT, copyright [TemplateMechanics](https://github.com/TemplateMechanics). See [LICENSE](LICENSE).
