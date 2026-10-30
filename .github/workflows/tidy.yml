@@ -1,0 +1,35 @@
+name: tidy
+
+# Practice pull requests are the point, not merging them. Without this they
+# pile up and the maintainer becomes the bottleneck of every learner's lesson.
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: Close practice pull requests older than this many days
+        default: '14'
+
+permissions:
+  pull-requests: write
+
+jobs:
+  close-old:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          DAYS: ${{ inputs.days || '14' }}
+        run: |
+          case "$DAYS" in ''|*[!0-9]*) echo "::error::days must be a whole number, got '$DAYS'"; exit 2;; esac
+          cutoff=$(date -u -d "-$DAYS days" +%Y-%m-%dT%H:%M:%SZ)
+          # keep-open lets the maintainer exempt a real pull request.
+          numbers=$(gh pr list --state open --limit 1000 --json number,createdAt,labels \
+            --jq ".[] | select(.createdAt < \"$cutoff\") | select([.labels[].name] | index(\"keep-open\") | not) | .number")
+          if [ -z "$numbers" ]; then echo "Nothing older than $DAYS days."; exit 0; fi
+          for n in $numbers; do
+            gh pr close "$n" --comment "Closing this practice pull request after $DAYS days - nothing is wrong with it. You opened a pull request, ran the checks and (maybe) fixed one; that was the whole exercise. Thanks for stopping by."
+          done

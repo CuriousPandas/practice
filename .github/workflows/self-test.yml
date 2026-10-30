@@ -1,0 +1,21 @@
+name: self-test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths: ['scripts/**', 'tests/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-visitor:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: bash tests/check-visitor.test.sh

@@ -1,0 +1,36 @@
+name: check
+
+on:
+  pull_request:
+    branches: [main]
+
+# Pull requests here come from strangers' forks. The pull_request event (never
+# pull_request_target) runs them with a read-only token and no secrets, so a
+# hostile pull request can read this public repo and nothing else.
+permissions:
+  contents: read
+
+jobs:
+  # This job name is the required status check in .github/rulesets/main.json.
+  # Renaming it leaves main requiring a check that never reports.
+  visitor-file:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The pull_request checkout is a merge commit: HEAD^1 is main,
+          # HEAD is main plus the pull request.
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Only your own visitor file changes
+        env:
+          # Through env, not ${{ }} inside the script, so nothing a user
+          # controls is ever pasted into shell source.
+          LOGIN: ${{ github.event.pull_request.user.login }}
+        run: |
+          # The rules come from main, so a pull request that edits the script
+          # does not change its own check. This is a teaching check, not a
+          # security boundary - the required review is.
+          git show HEAD^1:scripts/check-visitor.sh > "$RUNNER_TEMP/check-visitor.sh"
+          bash "$RUNNER_TEMP/check-visitor.sh" HEAD^1 HEAD "$LOGIN"
