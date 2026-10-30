@@ -1,2 +1,1 @@
-Hi
-see https://example.com
+Hi, I'm Dave. I made this.
